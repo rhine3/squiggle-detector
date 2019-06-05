@@ -248,7 +248,7 @@ def box_binary(spectrogram_binary):
     
     return bounding_boxes
 
-def wav_writer(samples, sample_rate, suffix, orig, subdir=None):
+def wav_writer(samples, sample_rate, suffix, orig, newdir=None, subdir=None, verbose=True):
     '''
     Saves a wav in same place as original .wav file
     
@@ -256,7 +256,9 @@ def wav_writer(samples, sample_rate, suffix, orig, subdir=None):
         samples: new samples to save
         orig: original filename of .wav file
         suffix: suffix for the new filename
-        subdir: name of a subdirectory to make in the original path.
+        newdir: a new directory to use instead of the original wav file's path
+        subdir: name of a subdirectory to make in the original or new directory
+        verbose: whether or not to print filename
         
     Returns:
         the new filename
@@ -264,14 +266,20 @@ def wav_writer(samples, sample_rate, suffix, orig, subdir=None):
     
     filesplit = os.path.split(orig)
     
-    # Get (and make if necessary) the path in which to save the wav
-    base_path = filesplit[0]
+    # Get the path in which to save the wav
+    if newdir:
+        base_path = newdir
+    else:
+        base_path = filesplit[0] #Same path as the original file
+    
     if subdir:
         base_path = os.path.join(base_path, subdir)
-        try: 
-            os.mkdir(base_path)
-        except FileExistsError:
-            pass
+    
+    # Make path if necessary
+    try: 
+        os.mkdir(base_path)
+    except FileExistsError:
+        pass
     
     # Get the name by which to save the wav
     file_name = filesplit[1]
@@ -279,8 +287,9 @@ def wav_writer(samples, sample_rate, suffix, orig, subdir=None):
     
     # Full path & filename by which wav should be saved
     file_path = os.path.join(base_path, base_name)
-
+    
     write_wav(file_path, np.array(samples), sample_rate)
+    if verbose: print(f'Saved files to {file_path}')
     
     return file_path
     
@@ -307,7 +316,7 @@ def box_to_ft(box, freqs, times, sr):
     return [low_freq, high_freq, start_sample, end_sample]
     
     
-def save_noise_file(binary_spectrogram, bounding_boxes, original_filename, samples, freqs, times, sr):
+def save_noise_file(binary_spectrogram, bounding_boxes, original_filename, samples, freqs, times, sr, newdir=None, subdir=None):
     '''
     Save a file containing the noise
     
@@ -319,6 +328,10 @@ def save_noise_file(binary_spectrogram, bounding_boxes, original_filename, sampl
         freqs: frequency list for the original spect used to generate bounding boxes
         times: time list for the original spect used to generate bounding boxes
         sr: sample rate
+        newdir: a place to save new files (by default, saves in same dir as original_filename)
+        subdir: a subdirectory in which to save new files 
+            if subdir = None, just saves in the behavior determined by newdir's presence or absence
+            if subdir == 'orig', saves in a directory named after original_filename
         
     Returns:
         new_filename (string): a path to the filename of the noise file
@@ -366,9 +379,10 @@ def save_noise_file(binary_spectrogram, bounding_boxes, original_filename, sampl
                 detection_data.extend(samples[sound_start:sound_end])
 
     # Write wavs and store their filenames
-    subdir = os.path.splitext(os.path.basename(original_filename))[0]
-    noise_filename = wav_writer(noise_data, sr, suffix='noise', orig = original_filename, subdir=subdir)
-    detections_filename = wav_writer(detection_data, sr, suffix='detections', orig = original_filename, subdir=subdir)
+    if subdir=='orig':
+        subdir = os.path.splitext(os.path.basename(original_filename))[0]
+    noise_filename = wav_writer(noise_data, sr, suffix='noise', orig = original_filename, subdir=subdir, newdir=newdir)
+    detections_filename = wav_writer(detection_data, sr, suffix='detections', orig = original_filename, subdir=subdir, newdir=newdir)
     
     return noise_filename
 
