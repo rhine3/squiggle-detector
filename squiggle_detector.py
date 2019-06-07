@@ -15,6 +15,7 @@ import os
 from scipy.signal import butter, lfilter
 from librosa.core import power_to_db
 from collections import OrderedDict
+import csv
 
 def plotter(
     spectrogram,
@@ -38,9 +39,7 @@ def plotter(
         ax.set_title(title)
     ax.set_aspect(spectrogram.shape[1] / (3*spectrogram.shape[0]))
 
-    plt.show()
-    
-    
+    #plt.show()
 
 def load_file(filename, sample_rate=22050):
     '''
@@ -235,7 +234,7 @@ def image_processing_dict(
     return result
 
 
-def box_binary(spectrogram_binary):
+def box_binary(spectrogram_binary, verbose = False):
     '''
     Identify boxes in a binary spectrogram
     '''
@@ -249,7 +248,8 @@ def box_binary(spectrogram_binary):
     for idx, slice_box in enumerate(bounding_boxes):
         bounding_boxes[idx] = [slice_box[0].start, slice_box[0].stop, slice_box[1].start, slice_box[1].stop]
     
-    plotter(spectrogram = binary_labeled, title = f'{num_bin_segments} segments identified:')
+    if verbose:
+        plotter(spectrogram = binary_labeled, title = f'{num_bin_segments} segments identified:')
     
     return bounding_boxes
 
@@ -297,11 +297,11 @@ def wav_writer(samples, sample_rate, suffix, orig, newdir=None, subdir=None, ver
     if verbose: print(f'Saved files to {file_path}')
     
     return file_path
-    
-    
-def box_to_ft(box, freqs, times, sr):
+
+
+def box_to_fs(box, freqs, times, sr):
     '''
-    Convert an np box to freq/time
+    Convert an np box to freq/sample
     
     Inputs:
         box (array): [low_freq_np, high_freq_np, start_time, end_time]
@@ -321,7 +321,17 @@ def box_to_ft(box, freqs, times, sr):
     return [low_freq, high_freq, start_sample, end_sample]
     
     
-def save_noise_file(binary_spectrogram, bounding_boxes, original_filename, samples, freqs, times, sr, newdir=None, subdir=None):
+def save_noise_and_detections_files(
+    binary_spectrogram,
+    bounding_boxes,
+    original_filename,
+    samples,
+    freqs,
+    times,
+    sr,
+    newdir=None,
+    subdir=None
+):
     '''
     Save a file containing the noise
     
@@ -333,25 +343,27 @@ def save_noise_file(binary_spectrogram, bounding_boxes, original_filename, sampl
         freqs: frequency list for the original spect used to generate bounding boxes
         times: time list for the original spect used to generate bounding boxes
         sr: sample rate
-        newdir: a place to save new files (by default, saves in same dir as original_filename)
+        newdir: a place to save new files 
+            if newdir == None (default), saves in same dir as original_filename
         subdir: a subdirectory in which to save new files 
-            if subdir = None, just saves in the behavior determined by newdir's presence or absence
+            if subdir == None (default), defaults to behavior of newdir, not creating a subdirectory
             if subdir == 'orig', saves in a directory named after original_filename
+            if subdir is something else, creates a subdir under newdir
         
     Returns:
         new_filename (string): a path to the filename of the noise file
     '''
     
     # Convert bounding boxes to frequency/sample # boxes
-    ft_boxes = []
+    fs_boxes = []
     for box in bounding_boxes:
-        ft_boxes.append(box_to_ft(box, freqs, times, sr))
+        fs_boxes.append(box_to_fs(box, freqs, times, sr))
 
     # Create list of samples identified as noise (True) or not (False)
     use_as_noise_samples = np.full(samples.shape[0], True, dtype=bool)
-    for ft_box in ft_boxes:
-        time_start = ft_box[2]
-        time_end = ft_box[3]
+    for fs_box in fs_boxes:
+        time_start = fs_box[2]
+        time_end = fs_box[3]
         use_as_noise_samples[time_start:time_end] = False
 
     # Create list of x boundaries for noisy spots
@@ -435,8 +447,74 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     y = lfilter(b, a, data)
     return y
     
+
+def identify_segments_audio(
+    filename,
+    samples,
+    bounding_boxes,
+    sample_rate, 
+    freqs,
+    times,
+    basepath,
+    template_dir,
+    csv_path
+):
     
-def identify_segments(
+    '''
+    Break audio into segments
+    
+    Inputs:
+        filename (string): filename of the original file, 
+            used to give each segment a name
+        samples: samples for the noise-reduced file
+        bounding_boxes (list of lists):
+            where each sublist is a detection box of the form:
+            [low_freq_np, high_freq_np, start_time, end_time]
+        freqs_nr (list): frequencies of the noise-reduced spectrogram
+        sample_rate (int): sample rate
+        times (list): times of the noise-reduced spectrogram
+        basepath (path): path to put the detections
+        template_dir (string): subdirectory of basepath in which to save templates
+        csv_path (string): path to file to append detections to. does NOT add csv header.
+    '''
+    
+    if os.path.exists(csv_path):
+        mode = 'a' # append if already exists
+    else:
+        mode = 'w+' # make a new file if not
+    
+    open_file = open(csv_path, mode)
+    writer = csv.writer(open_file)
+
+    for idx, box in enumerate(bounding_boxes):
+        # convert box, which is in terms of numpy array, to sample number and frequency number
+        high_freq, low_freq, start_sample, end_sample = box_to_fs(box, freqs, times, sample_rate)
+
+        # extract those samples from the audio
+        segment_samples = samples[start_sample: end_sample]
+
+        # bandpass filter the samples above and below the box limits
+        filtered_samples = butter_bandpass_filter(segment_samples, low_freq, high_freq, sample_rate)
+
+        # save samples
+        detection_filename = wav_writer(
+            filtered_samples,
+            sample_rate,
+            f'detection{idx}',
+            orig = filename,
+            newdir = basepath,
+            subdir = template_dir)
+        
+        # write information to csv
+        start_time = times[box[2]]
+        end_time = times[box[3]]
+        duration = end_time - start_time
+        writer.writerow([detection_filename, duration, low_freq, high_freq])
+        
+    open_file.close()
+    
+    
+def identify_segments_image(
     spectrogram_original,
     spectrogram_binary,
     bounding_boxes,
