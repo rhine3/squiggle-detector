@@ -1,0 +1,7 @@
+.DS_Store
+.ipynb_checkpoints/
+app/.DS_Store
+app/.csv
+app/.ipynb_checkpoints/
+app/__pycache__/
+app/recordings/
