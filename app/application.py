@@ -340,12 +340,10 @@ class Application:
             return
         
         if self.zoom:
-            print('zooming out')
             self.draw_spec(already_flipped = True)
             self.zoom=False
         
         else:
-            print('zooming in')
             self.draw_spec(cutoff=500000, already_flipped = True)
             self.zoom=True
             

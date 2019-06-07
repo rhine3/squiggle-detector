@@ -64,9 +64,9 @@ def load_file(filename, sample_rate=22050):
     # Force to mono if wav has multiple channels
     if samples.ndim > 1:
         samples = to_mono(samples)
-        print(
-            f"WARNING: Multiple-channel file detected ({filename}). Automatically mixed to mono."
-        )
+        #print(
+        #    f"WARNING: Multiple-channel file detected ({filename}). Automatically mixed to mono."
+        #)
         
     return samples, int(sample_rate)
 
