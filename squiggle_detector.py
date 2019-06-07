@@ -1,5 +1,10 @@
 import numpy as np
 from scipy import signal, ndimage
+from sys import platform as sys_pf
+if sys_pf == 'darwin':
+    import matplotlib
+    matplotlib.use("TkAgg")
+
 import matplotlib.pyplot as plt
 from librosa import load, to_mono
 from librosa.output import write_wav
