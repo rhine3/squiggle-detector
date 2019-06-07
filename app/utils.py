@@ -32,7 +32,8 @@ def plotter(
     if upside_down:
         ax.set_ylim(ax.get_ylim()[::-1])
     if title:
-        ax.set_title(title)
+        ax.set_title(title, fontsize=12)
+        
     ax.set_aspect(spectrogram.shape[1] / (3*spectrogram.shape[0]))
 
     #return fig
