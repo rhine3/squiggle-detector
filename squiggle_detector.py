@@ -39,7 +39,7 @@ def plotter(
         ax.set_title(title)
     ax.set_aspect(spectrogram.shape[1] / (3*spectrogram.shape[0]))
 
-    #plt.show()
+    plt.show()
 
 def load_file(filename, sample_rate=22050):
     '''
