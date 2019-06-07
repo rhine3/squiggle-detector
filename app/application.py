@@ -352,6 +352,7 @@ class Application:
         self.fig.clear()
         self.samples = None
         self.ax = self.fig.add_subplot(111)
+        self.canvas.draw()
       
     
     def load_next_file(self, increment=1):
