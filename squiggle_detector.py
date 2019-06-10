@@ -8,6 +8,7 @@ if sys_pf == 'darwin':
 import matplotlib.pyplot as plt
 from librosa import load, to_mono
 from librosa.output import write_wav
+from librosa.util.exceptions import ParameterError
 import noisereduce as nr
 from skimage.morphology import remove_small_objects
 from more_itertools import consecutive_groups
@@ -295,7 +296,10 @@ def wav_writer(samples, sample_rate, suffix, orig, newdir=None, subdir=None, ver
     # Full path & filename by which wav should be saved
     file_path = os.path.join(base_path, base_name)
     
-    write_wav(file_path, np.array(samples), sample_rate)
+    try: write_wav(file_path, np.array(samples), sample_rate)
+    except ParameterError: # librosa.util.exceptions.ParameterError
+        print(f'Skipping {file_path} due to ParameterError')
+
     if verbose: print(f'Saved files to {file_path}')
     
     return file_path
