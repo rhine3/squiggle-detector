@@ -24,6 +24,8 @@ def plotter(
     db=False, #db transform the spect
     fig_size=(15, 15), #Without this, just plots without a figsize
 ):
+    return 
+    
     # Plot, flip the y-axis
     if fig_size:
         fig, ax = plt.subplots(1, figsize=fig_size)
@@ -39,7 +41,7 @@ def plotter(
         ax.set_title(title)
     ax.set_aspect(spectrogram.shape[1] / (3*spectrogram.shape[0]))
 
-    plt.show()
+    #plt.show()
 
 def load_file(filename, sample_rate=22050):
     '''
@@ -64,9 +66,9 @@ def load_file(filename, sample_rate=22050):
     # Force to mono if wav has multiple channels
     if samples.ndim > 1:
         samples = to_mono(samples)
-        print(
-            f"WARNING: Multiple-channel file detected ({filename}). Automatically mixed to mono."
-        )
+        #print(
+        #    f"WARNING: Multiple-channel file detected ({filename}). Automatically mixed to mono."
+        #)
         
     return samples, int(sample_rate)
 
@@ -315,8 +317,16 @@ def box_to_fs(box, freqs, times, sr):
     
     low_freq = freqs[len(freqs)-box[0]-1]
     high_freq = freqs[len(freqs)-box[1]-1]
-    start_sample = int(round(times[box[2]-1] * sr)) #*(2-overlap_percent)*100)
-    end_sample = int(round(times[box[3]-1] * sr)) #int(box[3]*(2-overlap_percent)*100)
+    
+    # account for rounding error in boxing
+    start_time = box[2]-1
+    end_time = box[3]-1
+    if start_time > len(times)-1:
+        start_time = len(times)-1
+    if end_time > len(times) - 1:
+        end_time = len(times) - 1
+    start_sample = int(round(times[start_time] * sr))
+    end_sample = int(round(times[end_time] * sr)) 
     
     return [low_freq, high_freq, start_sample, end_sample]
     
@@ -506,8 +516,15 @@ def identify_segments_audio(
             subdir = template_dir)
         
         # write information to csv
-        start_time = times[box[2]]
-        end_time = times[box[3]]
+	# account for rounding error in boxing
+        if box[2] > len(times) - 1:
+            start_time = times[-1]
+        else:
+            start_time = times[box[2]]
+        if box[3] > len(times) - 1:
+            end_time = times[-1]
+        else:
+            end_time = times[box[3]]
         duration = end_time - start_time
         writer.writerow([detection_filename, duration, low_freq, high_freq])
         
