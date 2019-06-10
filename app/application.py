@@ -235,7 +235,7 @@ class Application:
         
         
         # Get filename for assessment file
-        '''self.assess_file = fd.asksaveasfilename(
+        self.assess_file = fd.asksaveasfilename(
             title = "Select filename")
         if self.assess_file.split('.')[-1].upper() != 'CSV':
             self.assess_file = f'{self.assess_file}.csv
@@ -243,14 +243,14 @@ class Application:
         # Get folder to assess
         loaded = self.open_folder()
         if not loaded:
-            return'''
+            return
         
         # For testing purposes
-        self.assess_file = '/Users/tessa/Code/detect-towhee/squiggle-detector/app/assess.csv'
-        self.open_folder(
-            dirname = '/Users/tessa/Code/detect-towhee/squiggle-detector/app/recordings',
-            pick_up_where_left_off = True
-        )
+        #self.assess_file = '/Users/tessa/Code/detect-towhee/squiggle-detector/app/assess.csv'
+        #self.open_folder(
+        #    dirname = '/Users/tessa/Code/detect-towhee/squiggle-detector/app/recordings',
+        #    pick_up_where_left_off = True
+        #)
         
         
         # Write a header to the desired file, if necessary
