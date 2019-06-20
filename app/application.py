@@ -208,7 +208,7 @@ class Application:
                     self.files.append(join(r, file))
                     
         # Remove all files that have already been reviewed in self.assess_file
-        if pick_up_where_left_off and self.assess_file:
+        if pick_up_where_left_off and exists(self.assess_file):
             with open(self.assess_file, 'r') as f:
                 reader = csv.reader(f)
                 for line in reader:
@@ -238,7 +238,7 @@ class Application:
         self.assess_file = fd.asksaveasfilename(
             title = "Select filename")
         if self.assess_file.split('.')[-1].upper() != 'CSV':
-            self.assess_file = f'{self.assess_file}.csv
+            self.assess_file = f'{self.assess_file}.csv'
             
         # Get folder to assess
         loaded = self.open_folder()
