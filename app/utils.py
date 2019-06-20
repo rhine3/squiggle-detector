@@ -34,7 +34,7 @@ def plotter(
     if title:
         ax.set_title(title, fontsize=12)
         
-    ax.set_aspect(spectrogram.shape[1] / (3*spectrogram.shape[0]))
+    ax.set_aspect(spectrogram.shape[1] / spectrogram.shape[0])
 
     #return fig
     #plt.show()
