@@ -1,7 +1,10 @@
 .DS_Store
 .ipynb_checkpoints/
+__pycache__/
 app/.DS_Store
 app/*.csv
 app/.ipynb_checkpoints/
 app/__pycache__/
 app/recordings/
+app/assessments/
+runs/
