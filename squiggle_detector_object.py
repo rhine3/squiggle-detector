@@ -167,18 +167,20 @@ class Audio():
         self.samples = self.load_file()
         self.samples_dn = None #For denoised samples
         self.noise_samples = None #For pure noise samples
-        self.detection_samples = None #For pure noise samples
+        self.detection_samples = None #For pure detection samples
 
         # These will be Spectrogram objects
-        self.raw = None
-        self.denoised = None #denoised
-        self.normalized = None
+        self.raw = None # For raw spectrogram
+        self.denoised = None # For denoised spectrogram
+        self.normalized = None # Etc.
         self.binarized = None
         self.bandpassed = None
-        self.processed = None
+        self.processed = None # A general place to store iterations 
+                              # of image-processed spectrograms (e.g.
+                              # sequentially dilating and median filtering
+                              # a spectrogram)
 
         # Other variables to be used
-        self.bounding_boxes = None
         self.noise_filename = None
         self.dn_filename = None
 
