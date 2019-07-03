@@ -31,11 +31,10 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=1):
 
     # TODO: workarounds to fix librosa ParameterError.
     # Remove nans
-    where_are_NaNs = np.isnan(y)
-    y[where_are_NaNs] = 0
+    y[np.isnan(y)] = 0
     # Remove np.inf and -1 * np.inf
-    filtered_samples[filtered_samples == np.inf] = 101
-    filtered_samples[filtered_samples == np.inf * -1] = -101 
+    y[y == np.inf] = 101
+    y[y == np.inf * -1] = -101 
 
     return y
 
