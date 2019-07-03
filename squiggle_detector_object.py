@@ -880,7 +880,7 @@ use Audio.save_noise_and_detections_files')
         return file_path
 
 
-    def identify_segments_audio(
+    def extract_segments_audio(
         self,
         box_source, # spectrogram
         sample_source, #samples
@@ -914,7 +914,7 @@ use Audio.save_noise_and_detections_files')
 
         assert(self.author)
 
-        # Open .csv to save segment information
+        # Open .csv for segment information
         csv_path = os.path.join(full_templates_path, f'{self.species}.csv')
         if os.path.exists(csv_path):
             mode = 'a' # append if already exists
@@ -928,7 +928,6 @@ use Audio.save_noise_and_detections_files')
         # Get bounding boxes and times
         box_source = self.get_spect(box_source)
         bounding_boxes = box_source.freq_samp_boxes
-        print('Freq_samp_boxes:', bounding_boxes)
         times = box_source.times
         try:
             assert bounding_boxes is not None
@@ -948,7 +947,7 @@ use Audio.save_noise_and_detections_files')
 
             # Extract those samples from the audio
             segment_samples = samples[start_sample: end_sample]
-
+            
             # Bandpass filter the samples above and below the box limits
             filtered_samples = butter_bandpass_filter(
                 segment_samples,
@@ -956,6 +955,10 @@ use Audio.save_noise_and_detections_files')
                 high_freq,
                 self.sample_rate
             )
+            
+            # TODO: temporary fix for parametererror
+            filtered_samples[filtered_samples == np.inf] = 101
+            filtered_samples[filtered_samples == np.inf * -1] = -101 
 
             # save samples
             filename_to_save = f'{self.species}_{segment_number}'
@@ -995,6 +998,7 @@ use Audio.save_noise_and_detections_files')
                      'unknown'])
 
         open_file.close()
+        return filtered_samples
 
 
 
@@ -1002,7 +1006,7 @@ use Audio.save_noise_and_detections_files')
 
 # TODO: implement these
 
-def identify_segments_image(
+def extract_segments_image(
     spectrogram_original,
     spectrogram_binary,
     bounding_boxes,
