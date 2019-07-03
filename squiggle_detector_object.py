@@ -212,9 +212,12 @@ class Audio():
         '''
 
 
+        valid_labels = [
+            'raw', 'denoised', 'normalized', 'binarized', 'processed', 'bandpassed']
         try:
-            assert label in ['raw', 'denoised', 'normalized', 'binarized', 'processed', 'bandpassed']
+            assert label in valid_labels
         except AssertionError:
+            print('Label must be in valid labels:', valid_labels)
             return None
 
         spect = getattr(self, label)
@@ -233,8 +236,12 @@ class Audio():
         Return the values of a labeled sample, self.label
         '''
 
-        assert label in ['samples', 'samples_dn', 'noise_samples', 'detection_samples']
-        return getattr(self, label)
+        valid_labels = ['samples', 'samples_dn', 'noise_samples', 'detection_samples']
+        try: 
+            assert label in valid_labels
+            return getattr(self, label)
+        except AssertionError:
+            raise AssertionError(f'Label must be in valid labels: {valid_labels}')
 
 
     def get_spect(self, label):
