@@ -1,5 +1,5 @@
 '''
-imutils.py
+utils.py
 Tessa Rhinehart
 
 Image-processing utilities for spectrograms.
@@ -11,6 +11,36 @@ the processed version of that spectrogram.
 from skimage.morphology import remove_small_objects
 from scipy import signal, ndimage
 import numpy as np
+
+
+########## Audio utilities ##########
+
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    Wn = [low, high]
+    if low == 0:
+        low = 0.00001
+    b, a = signal.butter(order, [low, high], btype='band')
+    return b, a
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=1):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = signal.lfilter(b, a, data)
+
+    # TODO: workarounds to fix librosa ParameterError.
+    # Remove nans
+    where_are_NaNs = np.isnan(y)
+    y[where_are_NaNs] = 0
+    # Remove np.inf and -1 * np.inf
+    filtered_samples[filtered_samples == np.inf] = 101
+    filtered_samples[filtered_samples == np.inf * -1] = -101 
+
+    return y
+
+
+########## Image utilities ##########
 
 def spectrogram_bandpass(spectrogram, frequencies, low_freq, high_freq):
     '''
@@ -75,6 +105,7 @@ def box_binary(spectrogram, x_margin = 0, y_margin = 0):
     
     # Put a box around each labeled sub-segment
     bounding_boxes = ndimage.find_objects(binary_labeled)
+    print('box_binary: bounding_boxes', bounding_boxes)
 
     # Use image processing techniques to find box overlaps
     box_image = np.full(spectrogram.shape, 0)

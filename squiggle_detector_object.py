@@ -23,7 +23,7 @@ import csv
 
 # Image processing utils
 from scipy import signal, ndimage
-import imutils
+import utils
 
 # Misc. utils
 from collections import OrderedDict
@@ -89,26 +89,6 @@ def plotter(
 
     #return fig, ax
     plt.show()
-
-def butter_bandpass(lowcut, highcut, fs, order=5):
-    nyq = 0.5 * fs
-    low = lowcut / nyq
-    high = highcut / nyq
-    Wn = [low, high]
-    if low == 0:
-        low = 0.00001
-    b, a = signal.butter(order, [low, high], btype='band')
-    return b, a
-
-def butter_bandpass_filter(data, lowcut, highcut, fs, order=1):
-    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
-    y = signal.lfilter(b, a, data)
-
-    # Remove nans to attempt to fix librosa ParameterError
-    where_are_NaNs = np.isnan(y)
-    y[where_are_NaNs] = 0
-
-    return y
 
 
 
@@ -425,7 +405,7 @@ class Audio():
 
         source = self.get_spect(source_label)
 
-        new_spect, new_freqs = imutils.spectrogram_bandpass(
+        new_spect, new_freqs = utils.spectrogram_bandpass(
             spectrogram = source.spect,
             frequencies = source.freqs,
             low_freq = low_freq,
@@ -456,7 +436,7 @@ class Audio():
 
         source = self.get_spect(source_label)
 
-        new_spect = imutils.flip_spect(source.spect)
+        new_spect = utils.flip_spect(source.spect)
 
         self.set_spect(
             label = source_label,
@@ -480,7 +460,7 @@ class Audio():
         '''
 
         source = self.get_spect(source_label)
-        new_spect = imutils.normalize_spect(source.spect)
+        new_spect = utils.normalize_spect(source.spect)
 
         self.set_spect(
             label = dest_label,
@@ -511,7 +491,7 @@ class Audio():
         '''
 
         source = self.get_spect(source_label)
-        new_spect = imutils.binarize_by_median(source.spect, multiplier=value)
+        new_spect = utils.binarize_by_median(source.spect, multiplier=value)
 
         self.set_spect(
             label = dest_label,
@@ -541,7 +521,7 @@ class Audio():
         '''
 
         source = self.get_spect(source_label)
-        new_spect = imutils.binary_closing(source.spect, size = size)
+        new_spect = utils.binary_closing(source.spect, size = size)
 
         self.set_spect(
             label = dest_label,
@@ -572,7 +552,7 @@ class Audio():
         '''
 
         source = self.get_spect(source_label)
-        new_spect = imutils.binary_dilation(source.spect, size = size)
+        new_spect = utils.binary_dilation(source.spect, size = size)
 
         self.set_spect(
             label = dest_label,
@@ -603,7 +583,7 @@ class Audio():
         '''
 
         source = self.get_spect(source_label)
-        new_spect = imutils.median_filter(source.spect, size = size)
+        new_spect = utils.median_filter(source.spect, size = size)
 
         self.set_spect(
             label = dest_label,
@@ -635,7 +615,7 @@ class Audio():
         '''
 
         source = self.get_spect(source_label)
-        new_spect = imutils.small_objects(source.spect, size = size)
+        new_spect = utils.small_objects(source.spect, size = size)
 
         self.set_spect(
             label = dest_label,
@@ -668,7 +648,7 @@ class Audio():
         source = self.get_spect(box_from)
 
         # Box the binary spectrogram
-        px_boxes = imutils.box_binary(
+        px_boxes = utils.box_binary(
             source.spect,
             x_margin = time_margin,
             y_margin = freq_margin
@@ -1023,16 +1003,12 @@ use Audio.save_noise_and_detections_files')
             segment_samples = samples[start_sample: end_sample]
             
             # Bandpass filter the samples above and below the box limits
-            filtered_samples = butter_bandpass_filter(
+            filtered_samples = utils.butter_bandpass_filter(
                 segment_samples,
                 low_freq,
                 high_freq,
                 self.sample_rate
             )
-            
-            # TODO: temporary fix for parametererror
-            filtered_samples[filtered_samples == np.inf] = 101
-            filtered_samples[filtered_samples == np.inf * -1] = -101 
 
             # save samples
             filename_to_save = f'{self.species}_{segment_number}'
