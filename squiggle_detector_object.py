@@ -33,26 +33,57 @@ from datetime import datetime
 # More misc. utils
 def plotter(
     spectrogram,
+    freqs=None, # Frequencies array that goes with this spect
     title=None,
-    upside_down = False,
+    upside_down = True, #most spectrograms are upside down
     db=False, #db transform the spect
     fig_size=(15, 15), #Without this, just plots without a figsize
     boxes=None,
 ):
-
-    # Plot, flip the y-axis
     if fig_size:
         fig, ax = plt.subplots(1, figsize=fig_size)
     else:
         fig, ax = plt.subplots(1)#, figsize=(10, 10))
-    if db:
-        ax.imshow(power_to_db(spectrogram), cmap=plt.get_cmap("gray_r"))
-    else:
-        ax.imshow(spectrogram, cmap=plt.get_cmap("gray_r"))
+      
+    
     if upside_down:
-        ax.set_ylim(ax.get_ylim()[::-1])
+        use_spect = np.flip(spectrogram, 0)
+    else:
+        use_spect = spectrogram
+    
+    if db:
+        ax.imshow(power_to_db(use_spect), cmap=plt.get_cmap("gray_r"))
+    else:
+        ax.imshow(use_spect, cmap=plt.get_cmap("gray_r"))
+        
+
+    ax.set_ylim(ax.get_ylim()[::-1])
+       
     if title:
         ax.set_title(title)
+
+    if freqs is not None:
+        res = 1000
+        import math
+        
+        # Find the factor by which to multiply the current y axis
+        high_y = ax.get_ylim()[1]
+        high_freq = math.ceil(freqs.max())
+        low_freq = math.ceil(freqs.min())
+        multiply_by = high_freq/high_y
+        
+        # Set the current ticks at strange numbers
+        # such that when they are replaced with multiplication
+        # by multiply_by, they will be even numbers
+        desired_high_tick_freq = high_freq - (high_freq % res)
+        desired_low_tick_freq = low_freq - (low_freq % res)
+        eventual_ticks = np.arange(desired_low_tick_freq, desired_high_tick_freq+res, res)
+        new_ticks = eventual_ticks / multiply_by
+        ax.set_yticks(new_ticks)
+        
+        ax.set_yticklabels(new_ticks*multiply_by)
+
+    
     if boxes:
         for box in boxes:
             rect = patch.Rectangle(
