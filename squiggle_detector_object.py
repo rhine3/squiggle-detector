@@ -610,7 +610,7 @@ class Audio():
         )
 
     ########## BOXING/NOISE REDUCTION FUNCTIONS ##########
-    def box(self, box_from, box_on):
+    def box(self, box_from, box_on, time_margin=0, freq_margin=0):
         '''
         Box a spectrogram
 
@@ -624,12 +624,20 @@ class Audio():
             box_from: will box based on self.box_from.spect
             box_on: will add box boundaries to the
                 self.box_on Spectrogram object
+            x_margin: margin on x axis within which separate
+                boxes will be combined into one box
+            y_margin: margin on y axis within which separate 
+                boxes will be combined into one box
         '''
 
         source = self.get_spect(box_from)
 
         # Box the binary spectrogram
-        px_boxes = imutils.box_binary(source.spect)
+        px_boxes = imutils.box_binary(
+            source.spect,
+            x_margin = time_margin,
+            y_margin = freq_margin
+        )
         freqs = source.freqs
         times = source.times
 

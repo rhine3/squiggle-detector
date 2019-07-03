@@ -44,12 +44,31 @@ def spectrogram_bandpass(spectrogram, frequencies, low_freq, high_freq):
     return new_spectrogram, new_frequencies
 
 
-def box_binary(spectrogram):
+def box_binary(spectrogram, x_margin = 0, y_margin = 0):
     '''
     Identify boxes in a binary spectrogram
     
+    Identify boxes in a binary spectrogram. First identifies
+    boxes based on the contents of the binary spectrograms.
+    Then calculates based on the provided margins whether
+    to combine boxes from the initial set of boxes.
+    
     Inputs:
         spectrogram: a binary spectrogram
+        x_margin (int): an margin for combining boxes. 
+            Boxes with x coordinates within x_margin of each other
+            will be considered part of the same box.
+        y_margin (int): a margin for combining boxes. 
+            Boxes with y coordinates within y_margin of each other
+            will be considered part of the same box.
+            
+    Returns:
+        A list of bounding boxes where each "box" is a list of format:
+            [high_freq_px, low_freq_px, start_time_px, end_time_px]
+        When these are used to index into the "frequencies" and "times"
+        arrays associated with the spectrograms, they will extract
+        the contents of the spectrogram within the box limits.
+        
     '''
     # Label sub-segments on binary spectrogram
     binary_labeled, num_bin_segments = ndimage.label(spectrogram)
@@ -57,6 +76,17 @@ def box_binary(spectrogram):
     # Put a box around each labeled sub-segment
     bounding_boxes = ndimage.find_objects(binary_labeled)
 
+    # Use image processing techniques to find box overlaps
+    box_image = np.full(spectrogram.shape, 0)
+    for b in bounding_boxes:
+        y_min = b[0].start - y_margin # high frequency
+        y_max = b[0].stop + y_margin # low frequency
+        x_min = b[1].start - x_margin # start time
+        x_max = b[1].stop + x_margin # end time
+        box_image[y_min:y_max, x_min:x_max] = 1
+    box_labeled, num_box_segs = ndimage.label(box_image)
+    bounding_boxes = ndimage.find_objects(box_labeled)
+    
     # Convert boxes, which are slices, to nice lists
     for idx, slice_box in enumerate(bounding_boxes):
         bounding_boxes[idx] = [slice_box[0].start, slice_box[0].stop, slice_box[1].start, slice_box[1].stop]
