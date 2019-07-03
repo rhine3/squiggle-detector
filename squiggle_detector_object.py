@@ -33,29 +33,21 @@ from datetime import datetime
 # More misc. utils
 def plotter(
     spectrogram,
-    freqs=None, # Frequencies array that goes with this spect
-    title=None,
-    upside_down = True, #most spectrograms are upside down
-    db=False, #db transform the spect
-    fig_size=(15, 15), #Without this, just plots without a figsize
-    boxes=None,
+    freqs = None, # Frequencies array that goes with this spect
+    title = None,
+    db = False, #db transform the spect
+    fig_size = (15, 15), #Without this, just plots without a figsize
+    boxes = None,
 ):
     if fig_size:
         fig, ax = plt.subplots(1, figsize=fig_size)
     else:
         fig, ax = plt.subplots(1)#, figsize=(10, 10))
       
-    
-    if upside_down:
-        use_spect = np.flip(spectrogram, 0)
-    else:
-        use_spect = spectrogram
-    
     if db:
-        ax.imshow(power_to_db(use_spect), cmap=plt.get_cmap("gray_r"))
+        ax.imshow(power_to_db(spectrogram), cmap=plt.get_cmap("gray_r"))
     else:
-        ax.imshow(use_spect, cmap=plt.get_cmap("gray_r"))
-        
+        ax.imshow(spectrogram, cmap=plt.get_cmap("gray_r"))
 
     ax.set_ylim(ax.get_ylim()[::-1])
        
@@ -409,9 +401,8 @@ class Audio():
             nfft = 512)
 
         self.set_spect(dest_spect, spect = spect, freqs = freqs, times = times)
-
-        self.flip(dest_spect)
-
+        
+        #self.flip(dest_spect)
 
 
     ######## FUNCTIONS FOR PROCESSING SPECTROGRAMS ########
