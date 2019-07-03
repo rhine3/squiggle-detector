@@ -408,7 +408,8 @@ class Audio():
         self.set_spect(
             label = dest_label,
             spect = new_spect,
-            freqs = new_freqs
+            freqs = new_freqs,
+            times = source.times
         )
 
     def flip(self, source_label):
