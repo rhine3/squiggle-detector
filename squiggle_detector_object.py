@@ -998,7 +998,6 @@ use Audio.save_noise_and_detections_files')
                      'unknown'])
 
         open_file.close()
-        return filtered_samples
 
 
 
