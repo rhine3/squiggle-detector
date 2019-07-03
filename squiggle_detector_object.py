@@ -736,20 +736,26 @@ frequency and sample boxes computed with Audio.box()')
             path_to_save = path_for_helper_files,
             filename_to_save = 'detections')
 
-    def audacity_noise_reduce(self):
+    def audacity_noise_reduce(self, to_reduce = 'samples'):
         '''
-        Noise-reduce self.samples and save file.
+        Noise-reduce a target spectrogram and save file.
 
-        Noise-reduce self.samples using Audacity's algorithm.
-        Requires that self.noise_samples is already computed.
+        Noise-reduce self.samples (default) or another spectrogram 
+        using Audacity's algorithm. Requires that self.noise_samples 
+        is already computed. Saves result in self.samples_dn.
+        
+        Can be used iteratively to noise reduce, e.g.:
+        
+        audacity_noise_reduce(to_reduce = 'samples') # Saves in self.samples_dn
+        audacity_noise_reduce(to_reduce = 'samples_dn')
         '''
 
-        # Ensure that noise reduction happened
+        # Ensure that noise selection happened
         try:
             assert self.noise_filename is not None
         except AssertionError:
             raise ValueError(
-'The noise-reduced samples (Audio.samples_nr) must be loaded first; \
+'The noise file (Audio.noise_filename) must be created first; \
 use Audio.save_noise_and_detections_files')
 
         # Set self.noise_samples if not already loaded
@@ -761,9 +767,10 @@ use Audio.save_noise_and_detections_files')
                 res_type='kaiser_best',
             )
 
-        # Noise-reduce self.samples
+        # Noise-reduce target
+        target = self.get_samples(to_reduce)
         self.samples_dn = nr.reduce_noise(
-            audio_clip = self.samples,
+            audio_clip = target,
             noise_clip = self.noise_samples,
             #verbose = bool(self.verbosity)
         )
