@@ -151,6 +151,9 @@ class Application:
         self.frame.focus_set()
         self.frame.bind("<n>", lambda event: self.load_next_file())
         self.frame.bind("<q>", lambda event: self.frame.quit())
+        self.frame.bind("<a>", lambda event: self.write_assessment(status='accept'))
+        self.frame.bind("<r>", lambda event: self.write_assessment(status='reject'))
+        self.frame.bind("<h>", lambda event: self.write_assessment(status='hold'))
         return
 
 
@@ -180,8 +183,12 @@ class Application:
         self.position = 0
 
         if filename:
-            self.load_samples()
-            self.draw_spec()
+            loaded = self.load_samples()
+            if loaded:
+                self.draw_spec()
+                self.play()
+            else:
+                self.write_assessment(status='reject')
 
 
     def open_folder(self, directory=None, pick_up_where_left_off=True):
@@ -220,8 +227,12 @@ class Application:
         # Draw initial spectrogram if files were returned
         if self.files:
             self.position = 0
-            self.load_samples()
-            self.draw_spec()
+            loaded = self.load_samples()
+            if loaded:
+                self.draw_spec()
+                self.play()
+            else:
+                self.write_assessment(status='reject')
             return 1
         # No files returned
         else:
@@ -300,13 +311,18 @@ class Application:
         self.clear_fig()
         self.zoom = False
 
-        self.samples, sr = load_file(
-            self.files[self.position],
-            sample_rate=self.sample_rate)
+        try:
+            self.samples, sr = load_file(
+                self.files[self.position],
+                sample_rate=self.sample_rate)
 
-        # Convert to needed format
-        self.samples *= 32767 / max(abs(self.samples))
-        self.samples = self.samples.astype(np.int16)
+            # Convert to needed format
+            self.samples *= 32767 / max(abs(self.samples))
+            self.samples = self.samples.astype(np.int16)
+
+            return True
+        except:
+            return False
 
 
     def draw_spec(self, cutoff=None, already_flipped=False):
@@ -372,8 +388,12 @@ class Application:
         # Load the next file if there are more files to load
         self.position += increment
         if self.position < len(self.files):
-            self.load_samples()
-            self.draw_spec()
+            loaded = self.load_samples()
+            if loaded:
+                self.draw_spec()
+                self.play()
+            else:
+                self.write_assessment(status='reject')
 
         else:
             # TODO: add a message
@@ -395,13 +415,14 @@ class Application:
         to the assessment file at self.assess_file, then move
         to next file
         '''
+        if self.assess_file:
+            with open(self.assess_file, 'a') as f:
+                writer = csv.writer(f, delimiter=',')
+                writer.writerow([self.files[self.position], status])
 
-        with open(self.assess_file, 'a') as f:
-            writer = csv.writer(f, delimiter=',')
-            writer.writerow([self.files[self.position], status])
-
-        self.load_next_file()
-
+            self.load_next_file()
+        else:
+            print('No files to assess.')
 
     def finish_assessment(self):
         '''
