@@ -105,7 +105,6 @@ def box_binary(spectrogram, x_margin = 0, y_margin = 0):
     
     # Put a box around each labeled sub-segment
     bounding_boxes = ndimage.find_objects(binary_labeled)
-    print('box_binary: bounding_boxes', bounding_boxes)
 
     # Use image processing techniques to find box overlaps
     box_image = np.full(spectrogram.shape, 0)
