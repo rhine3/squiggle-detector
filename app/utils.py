@@ -23,6 +23,7 @@ def plotter(
     title=None,
     upside_down = False,
     db=True, #db transform the spect
+    return_ax=False
 ):
     # Plot, flip the y-axis
     if db:
@@ -34,10 +35,11 @@ def plotter(
     if title:
         ax.set_title(title, fontsize=12)
         
-    ax.set_aspect(spectrogram.shape[1] / spectrogram.shape[0])
+    ax.set_aspect(spectrogram.shape[1] / (3* spectrogram.shape[0]))
 
-    #return fig
-    #plt.show()
+    if return_ax:
+        return ax
+        plt.show()
     
     
 
