@@ -897,29 +897,24 @@ use Audio.save_noise_and_detections_files')
 
     def extract_segments_audio(
         self,
-        box_source, # spectrogram
-        sample_source, #samples
+        box_source,
+        sample_source
     ):
 
         '''
-        Break audio into segments
-
-        Inputs:
-            samples: samples for the noise-reduced file
-            bounding_boxes (list of lists):
-                where each sublist is a detection box of the form:
-                [low_freq_np, high_freq_np, start_time, end_time]
-            freqs_nr (list): frequencies of the noise-reduced spectrogram
-            sample_rate (int): sample rate
-            times (list): times of the noise-reduced spectrogram
-            basepath (path): path to put the detections
-            template_dir (string): subdirectory of basepath in which to save templates
-            csv_path (string): path to file to append detections to. does NOT add csv header.
-
+        Save audio files based on boxed segments
+        
+        For each boxed segment, extracts the samples from the
+        desired times and band-pass filters to select only the desired
+        frequencies. Saves each file and creates a row in the csv.
 
         CSV format:
             FILENAME, TYPE,DURATION_s, LOW-BOUND, HIGH-BOUND, BOUND-UNIT, SOURCE-FILE, EXTRACTOR, EXTRACTION-METHOD, DATE, DEPRECATED, CALL-TYPE
             species_0.wav,audio,<seconds>,<Hz>,<Hz>,Hz,<path-to-source-file>,author,autoboxer,<date>,0,unknown
+            
+        Inputs:
+            box_source: spectrogram that boxes came from
+            sample_source: source of samples to extract and filter
         '''
         full_templates_path = os.path.join(self.templates_path, self.species)
         try:
