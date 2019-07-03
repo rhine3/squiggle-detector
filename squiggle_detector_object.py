@@ -193,9 +193,9 @@ class Audio():
         self.overlap_percent = overlap_percent
         self.verbosity = verbosity
         self.mode = audio_or_image
-
-        # Load file
-        self.samples = self.load_file()
+        
+        # Samples we may make
+        self.samples = None
         self.samples_dn = None #For denoised samples
         self.noise_samples = None #For pure noise samples
         self.detection_samples = None #For pure detection samples
@@ -220,6 +220,11 @@ class Audio():
         self.helper_files_path = None,
         self.species = None
         self.author = None, # Your name
+        
+        
+        # Load file into raw spectrogram
+        self.samples = self.load_file()
+        self.make_spect(source_samples='samples', dest_spect='raw')
 
     ########## FUNCTIONS FOR GETTING AND SETTING CLASS ATTRS ##########
 
@@ -787,7 +792,8 @@ frequency and sample boxes computed with Audio.box()')
 
     def audacity_noise_reduce(
         self,
-        to_reduce = 'samples',
+        source_samples = 'samples',
+        dest_spect = 'denoised',
         nr_params = {
             'n_std_thresh':1.1
         }):
@@ -800,11 +806,12 @@ frequency and sample boxes computed with Audio.box()')
         
         Can be used iteratively to noise reduce, e.g.:
         
-        audacity_noise_reduce(to_reduce = 'samples') # Saves in self.samples_dn
-        audacity_noise_reduce(to_reduce = 'samples_dn')
+        audacity_noise_reduce(source_samples = 'samples') # Saves in self.samples_dn
+        audacity_noise_reduce(source_samples = 'samples_dn')
         
         Inputs:
-            to_reduce (string): label for the samples to be reduced using self.noise_samples
+            source_samples (string): label of the samples to be reduced
+            dest_spect (string): label to save the denoised spactrogram under
             nr_params (dict): parameters for Audacity noise reduce.
                 From noisereduce documentation (https://github.com/timsainb/noisereduce)
                 the possible parameters are:
@@ -838,7 +845,7 @@ use Audio.save_noise_and_detections_files')
             )
 
         # Noise-reduce target
-        target = self.get_samples(to_reduce)
+        target = self.get_samples(source_samples)
         self.samples_dn = nr.reduce_noise(
             audio_clip = target,
             noise_clip = self.noise_samples,
@@ -853,6 +860,9 @@ use Audio.save_noise_and_detections_files')
             samples = self.samples_dn,
             path_to_save = path_for_helper_files,
             filename_to_save = 'denoised')
+        
+        # Make spectrogram
+        self.make_spect(source_samples = source_samples, dest_spect = dest_spect)
 
 
     ########## I/O RELATED FUNCTIONS ##########
